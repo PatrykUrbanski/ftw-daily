@@ -26,6 +26,18 @@ describe('BookingDatesForm', () => {
         bookingDates={{}}
         startDatePlaceholder="today"
         endDatePlaceholder="tomorrow"
+        fetchLineItemsInProgress={false}
+        onFetchTransactionLineItems={noop}
+        lineItems={[
+          {
+            code: 'line-item/nights',
+            unitPrice: new Money(1099, 'USD'),
+            units: new Decimal(2),
+            includeFor: ['customer', 'provider'],
+            lineTotal: new Money(2198, 'USD'),
+            reversal: false,
+          },
+        ]}
       />
     );
     expect(tree).toMatchSnapshot();
@@ -58,7 +70,17 @@ describe('EstimatedBreakdownMaybe', () => {
       startDate,
       endDate,
     };
-    const tree = shallow(<EstimatedBreakdownMaybe bookingData={data} />);
+    const lineItems = [
+      {
+        code: 'line-item/nights',
+        unitPrice,
+        units: new Decimal(2),
+        includeFor: ['customer', 'provider'],
+        lineTotal: new Money(2198, 'USD'),
+        reversal: false,
+      },
+    ];
+    const tree = shallow(<EstimatedBreakdownMaybe bookingData={data} lineItems={lineItems} />);
     const breakdown = tree.find(BookingBreakdown);
     const { userRole, unitType, transaction, booking } = breakdown.props();
 
@@ -74,10 +96,10 @@ describe('EstimatedBreakdownMaybe', () => {
     expect(transaction.attributes.payoutTotal).toEqual(new Money(2198, 'USD'));
     expect(transaction.attributes.lineItems).toEqual([
       {
-        code: 'line-item/night',
-        includeFor: ['customer', 'provider'],
+        code: 'line-item/nights',
         unitPrice,
-        quantity: new Decimal(2),
+        units: new Decimal(2),
+        includeFor: ['customer', 'provider'],
         lineTotal: new Money(2198, 'USD'),
         reversal: false,
       },
