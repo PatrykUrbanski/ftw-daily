@@ -1,50 +1,44 @@
-import { types as sdkTypes } from './sdkLoader';
+import { types as sdkTypes, transit } from './sdkLoader';
 import moment from 'moment';
 import Decimal from 'decimal.js';
 
-// TODO: read PORT from env var
-const API_BASE_URL = 'http://localhost:3500';
+const apiBaseUrl = () => {
+  const port = process.env.REACT_APP_DEV_API_SERVER_PORT;
+  const useDevApiServer = process.env.NODE_ENV === 'development' && !!port;
+
+  // In development, the dev API server is running in a different port
+  if (useDevApiServer) {
+    return `http://localhost:${port}`;
+  }
+
+  // Otherwise, use the same domain and port as the frontend
+  return '/';
+};
+
+const typeHandlers = [
+  {
+    type: sdkTypes.BigDecimal,
+    customType: Decimal,
+    writer: v => new sdkTypes.BigDecimal(v.toString()),
+    reader: v => new Decimal(v.value),
+  },
+];
 
 const serialize = data => {
-  console.log('serialize input:', data);
-  const str = JSON.stringify(data, sdkTypes.replacer);
-  console.log('serialize output:', str);
-  return str;
+  return transit.write(data, { typeHandlers });
 };
 
 const deserialize = str => {
-  console.log('deserialize input:', str);
-  const data = JSON.parse(str, (key, val) => {
-    if (typeof val === 'string') {
-      const date = moment(val, moment.ISO_8601);
-      if (date.isValid()) {
-        console.log('string->Date', key, val, date.toDate());
-        return date.toDate();
-      }
-      let decimal;
-      try {
-        decimal = new Decimal(val);
-        console.log('string->Decimal:', key, val, decimal);
-        return decimal;
-      } catch (e) {
-        return val;
-      }
-      return val;
-    }
-    return sdkTypes.reviver(key, val);
-  });
-  console.log('deserialize output:', data);
-  return data;
+  return transit.read(str, { typeHandlers });
 };
 
 const post = (path, body) => {
-  console.log('post', path, body);
-  const url = `${API_BASE_URL}${path}`;
+  const url = `${apiBaseUrl()}${path}`;
   const options = {
     method: 'POST',
     credentials: 'include',
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/transit+json',
     },
     body: serialize(body),
   };

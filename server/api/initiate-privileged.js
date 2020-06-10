@@ -13,7 +13,6 @@ const debug = (...args) => {
 
 module.exports = (req, res) => {
   // const { isSpeculative, bookingData, bodyParams, queryParams } = deserialize(req.body);
-  console.log('body:', req.body);
   const { isSpeculative, bookingData, bodyParams, queryParams } = req.body;
 
   const listingId = bodyParams && bodyParams.params ? bodyParams.params.listingId : null;
@@ -48,7 +47,8 @@ module.exports = (req, res) => {
         },
       };
 
-      debug('calling tx initiate with body params:', body, 'and query params:', queryParams);
+      // debug('calling tx initiate with body params:', body, 'and query params:', queryParams);
+      debug('calling tx initiate');
 
       if (isSpeculative) {
         return trustedSdk.transactions.initiateSpeculative(body, queryParams);
@@ -56,10 +56,12 @@ module.exports = (req, res) => {
       return trustedSdk.transactions.initiate(body, queryParams);
     })
     .then(apiResponse => {
-      debug('response from tx initiate:', apiResponse);
+      // debug('response from tx initiate:', apiResponse);
+      debug('tx initiate success');
       const { status, statusText, data } = apiResponse;
       res
         .status(status)
+        // TODO: set content type header
         .send(
           serialize({
             status,

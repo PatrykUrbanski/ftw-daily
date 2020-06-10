@@ -49,16 +49,12 @@ const getUserToken = req => {
 };
 
 exports.serialize = data => {
-  console.log('serialize input:', data);
-  const str = JSON.stringify(data);
-  console.log('serialize output:', str);
+  const str = sharetribeSdk.transit.write(data, { typeHandlers, verbose: true });
   return str;
 };
 
 exports.deserialize = str => {
-  console.log('deserialize input:', str);
-  const data = JSON.parse(str, sharetribeSdk.types.reviver);
-  console.log('deserialize output:', data);
+  const data = sharetribeSdk.transit.read(str, { typeHandlers });
   return data;
 };
 
@@ -101,7 +97,6 @@ exports.getSdk = (req, res) => {
 
 exports.getTrustedSdk = req => {
   const userToken = getUserToken(req);
-  debug('userToken:', userToken);
 
   // Initiate an SDK instance for token exchange
   const sdk = sharetribeSdk.createInstance({
@@ -120,7 +115,6 @@ exports.getTrustedSdk = req => {
   return sdk.exchangeToken().then(response => {
     // Setup a trusted sdk with the token we got from the exchange:
     const trustedToken = response.data;
-    debug('trustedToken:', trustedToken);
 
     debug('create trusted SDK');
     return sharetribeSdk.createInstance({
